@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'pages/main_navigation.dart';
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -225,19 +227,36 @@ class _LoginPageState extends State<LoginPage> {
                           width: size.width * 0.9,
                           child: ElevatedButton(
                             onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                if (_selectedMethod == LoginMethod.email) {
-                                  print('Logging in with Email: ${emailController.text}');
-                                } else {
-                                  print('Logging in with Phone: ${phoneController.text}');
-                                }
-                                print('Password: ${passwordController.text}');
+  if (_formKey.currentState!.validate()) {
+    if (_selectedMethod == LoginMethod.email) {
+      print('Logging in with Email: ${emailController.text}');
+    } else {
+      print('Logging in with Phone: ${phoneController.text}');
+    }
+    print('Password: ${passwordController.text}');
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Login successful!')),
-                                );
-                              }
-                            },
+    final Map<String, String> user = {
+      'name': '',
+      'userId': _selectedMethod == LoginMethod.email
+          ? emailController.text
+          : phoneController.text,
+      'userType': '',
+      'gender': '',
+      'dob': '',
+      'email': emailController.text,
+      'phone': phoneController.text,
+      'avatar': '',
+    };
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MainNavigationPage(user: user),
+      ),
+    );
+  }
+},
+
                             child: Text('Login'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: selectedColor,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart'; // CustomTextField widget
-import 'otp_verification_page.dart'; // OTP Verification Page
+import '../widgets/custom_text_field.dart';
+import 'profile_page.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -10,6 +10,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -25,6 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
     passwordController.dispose();
@@ -35,14 +37,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _pickDate() async {
     DateTime initialDate = selectedDate ?? DateTime(2000);
-    DateTime firstDate = DateTime(1900);
-    DateTime lastDate = DateTime.now();
-
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
@@ -53,31 +52,29 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _sendOtp() {
-    if (selectedUserType == null) {
-      _showSnackBar('Please select a User Type');
-      return;
-    }
-    if (selectedGender == null) {
-      _showSnackBar('Please select a Gender');
-      return;
-    }
-    if (dobController.text.isEmpty) {
-      _showSnackBar('Please select your Date of Birth');
+    if (selectedUserType == null || selectedGender == null || dobController.text.isEmpty) {
+      _showSnackBar('Please complete all required fields');
       return;
     }
 
     if (_formKey.currentState!.validate()) {
-      print("User Type: $selectedUserType");
-      print("Gender: $selectedGender");
-      print("Date of Birth: ${dobController.text}");
-      print("Email: ${emailController.text}");
-      print("Phone: ${phoneController.text}");
-      print("Password: ${passwordController.text}");
-
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => OTPVerificationPage(phone: phoneController.text),
+          builder: (_) => ProfilePage(
+            user: {
+              'name': nameController.text,
+              'userId': phoneController.text,
+              'userType': selectedUserType!,
+              'gender': selectedGender!,
+              'dob': dobController.text,
+              'email': emailController.text,
+              'phone': phoneController.text,
+              'avatar': selectedGender == 'Male'
+                  ? 'assets/male_avatar.png'
+                  : 'assets/female_avatar.png',
+            },
+          ),
         ),
       );
     }
@@ -85,12 +82,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color.fromARGB(255, 90, 88, 88),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(16),
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.grey[800]),
     );
   }
 
@@ -99,7 +91,6 @@ class _RegisterPageState extends State<RegisterPage> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -108,65 +99,40 @@ class _RegisterPageState extends State<RegisterPage> {
           child: ListView(
             padding: EdgeInsets.only(bottom: 40),
             children: [
-              // Heading and Subheading
-              Text(
-                'Create an Account',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFA602CF),
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "Hello! Let's Create an account",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
+              Text('Create an Account', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFA602CF))),
               SizedBox(height: 24),
 
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'User Type',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                value: selectedUserType,
-                items: userTypes
-                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                    .toList(),
-                onChanged: (val) => setState(() => selectedUserType = val),
-                validator: (value) => value == null ? 'Please select user type' : null,
+              CustomTextField(
+                label: 'Full Name',
+                controller: nameController,
+                validator: (value) => value == null || value.isEmpty ? 'Enter your name' : null,
               ),
               SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
+                decoration: InputDecoration(labelText: 'User Type', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                value: selectedUserType,
+                items: userTypes.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                onChanged: (val) => setState(() => selectedUserType = val),
+                validator: (value) => value == null ? 'Select user type' : null,
+              ),
+              SizedBox(height: 16),
+
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(labelText: 'Gender', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                 value: selectedGender,
-                items: genders
-                    .map((gender) => DropdownMenuItem(value: gender, child: Text(gender)))
-                    .toList(),
+                items: genders.map((gender) => DropdownMenuItem(value: gender, child: Text(gender))).toList(),
                 onChanged: (val) => setState(() => selectedGender = val),
-                validator: (value) => value == null ? 'Please select gender' : null,
+                validator: (value) => value == null ? 'Select gender' : null,
               ),
               SizedBox(height: 16),
 
               CustomTextField(
                 label: 'Date of Birth',
                 controller: dobController,
-                keyboardType: TextInputType.datetime,
                 readOnly: true,
                 onTap: _pickDate,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Select your date of birth' : null,
+                validator: (value) => value == null || value.isEmpty ? 'Select date of birth' : null,
               ),
               SizedBox(height: 16),
 
@@ -175,10 +141,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your email';
-                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-                  return null;
+                  if (value == null || value.isEmpty) return 'Enter email';
+                  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}\$');
+                  return !regex.hasMatch(value) ? 'Enter valid email' : null;
                 },
               ),
               SizedBox(height: 16),
@@ -188,9 +153,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your phone number';
-                  if (!RegExp(r'^\d{10}$').hasMatch(value)) return 'Phone number must be 10 digits';
-                  return null;
+                  if (value == null || value.isEmpty) return 'Enter phone number';
+                  return !RegExp(r'^\d{10}\$').hasMatch(value) ? 'Phone must be 10 digits' : null;
                 },
               ),
               SizedBox(height: 16),
@@ -199,11 +163,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: 'Password',
                 controller: passwordController,
                 isPassword: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter a password';
-                  if (value.length < 6) return 'Password must be at least 6 characters';
-                  return null;
-                },
+                validator: (value) => value == null || value.length < 6 ? 'Password too short' : null,
               ),
               SizedBox(height: 16),
 
@@ -211,27 +171,18 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: 'Confirm Password',
                 controller: confirmPasswordController,
                 isPassword: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Confirm your password';
-                  if (value != passwordController.text) return 'Passwords do not match';
-                  return null;
-                },
+                validator: (value) => value != passwordController.text ? 'Passwords do not match' : null,
               ),
               SizedBox(height: 24),
 
-              SizedBox(
-                width: size.width * 0.9,
-                child: ElevatedButton(
-                  onPressed: _sendOtp,
-                  child: Text('Send OTP'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFA602CF),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              ElevatedButton(
+                onPressed: _sendOtp,
+                child: Text('Send OTP'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFA602CF),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],

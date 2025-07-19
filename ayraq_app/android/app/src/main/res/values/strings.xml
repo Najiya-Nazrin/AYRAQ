@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AYRAQ</string>
+    <string name="accessibility_service_description">AYRAQ overlay service</string>
+    <string name="overlay_permission_message">This app requires overlay permission to show floating widgets</string>
+</resources>
