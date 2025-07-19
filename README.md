@@ -10,6 +10,7 @@
 - 🛡️ **Built-in Legal Advice** section for next steps
 - 🔘 Works over any app without interrupting usability (floating overlay)
 
+
 ---
 
 ## 📁 Project Structure
